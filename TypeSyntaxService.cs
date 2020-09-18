@@ -31,6 +31,13 @@ namespace UnitTestTemplateGenerator
 
                 return $"{elementType}[]";
             }
+            else if (type is QualifiedNameSyntax qualifiedNameSyntax)
+            {
+                var left = GetTypeString(qualifiedNameSyntax.Left);
+                var right = GetTypeString(qualifiedNameSyntax.Right);
+
+                return $"{left}.{right}";
+            }
             else
             {
                 throw new NotSupportedException($"{nameof(TypeSyntax)}'s subtype {type.GetType().FullName} is not supported.");

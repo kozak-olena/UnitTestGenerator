@@ -1,42 +1,70 @@
 ﻿using HandlebarsDotNet;
+using System;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace UnitTestTemplateGenerator
 {
-	class UnitTestTemplateGenerator
-	{
-		public static string Generate(string cutSourceCode)
-		{
-			var (usings, namespaceNode, classNode, ctorNode) = SourceCodeParser.ParseSourceCode(cutSourceCode);
+    class UnitTestTemplateGenerator
+    {
+        public static string Generate(string cutSourceCode)
+        {
+            var (usings, namespaceNode, classNode, ctorNode) = SourceCodeParser.ParseSourceCode(cutSourceCode);
 
-			var viewModel = UnitTestViewModelFactory.GetViewModel(usings, namespaceNode, classNode, ctorNode);
+            var viewModel = UnitTestViewModelFactory.GetViewModel(usings, namespaceNode, classNode, ctorNode);
 
-			var generatedCode = RenderUnitTestSourceCode(viewModel);
+            var generatedCode = RenderUnitTestSourceCode(viewModel);
 
-			return generatedCode;
-		}
+            var normalizedCode = Normalize(generatedCode);
 
-		private static string RenderUnitTestSourceCode(UnitTestCodeViewModel viewModel)
-		{
-			var templateText = GetUnitTestSourceCodeTemplate();
+            return normalizedCode;
+        }
 
-			var template = Handlebars.Compile(templateText);
+        private static string DetectOSLineEnding()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return "\n";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return "\r\n";
+            }
+            else
+            {
+                throw new NotSupportedException("Current OS is not supported");
+            }
+        }
 
-			var unitTestSourceCode = template(viewModel);
+        private static string Normalize(string generatedCode)
+        {
+            string currentOsEnding = DetectOSLineEnding();
 
-			return unitTestSourceCode;
-		}
+            return Regex.Replace(generatedCode, @"\r\n|\n\r|\n|\r", currentOsEnding);
+        }
 
-		private static string GetUnitTestSourceCodeTemplate()
-		{
-			var assembly = Assembly.GetExecutingAssembly();
-			var resourceName = "UnitTestTemplateGenerator.Templates.UnitTestSourceCodeTemplate.hbt";
+        private static string RenderUnitTestSourceCode(UnitTestCodeViewModel viewModel)
+        {
+            var templateText = GetUnitTestSourceCodeTemplate();
 
-			using Stream stream = assembly.GetManifestResourceStream(resourceName);
-			using StreamReader reader = new StreamReader(stream);
+            var template = Handlebars.Compile(templateText);
 
-			return reader.ReadToEnd();
-		}
-	}
+            var unitTestSourceCode = template(viewModel);
+
+            return unitTestSourceCode;
+        }
+
+        private static string GetUnitTestSourceCodeTemplate()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = "UnitTestTemplateGenerator.Templates.UnitTestSourceCodeTemplate.hbt";
+
+            using Stream stream = assembly.GetManifestResourceStream(resourceName);
+            using StreamReader reader = new StreamReader(stream);
+
+            return reader.ReadToEnd();
+        }
+    }
 }
