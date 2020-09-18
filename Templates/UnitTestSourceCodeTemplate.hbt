@@ -1,0 +1,57 @@
+﻿{{Usings}}
+using {{CutNamespace}};
+
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+using Moq;
+
+namespace {{Namespace}}
+{
+    [TestClass]
+    public class {{CutName}}Tests
+    {
+        {{#each MethodsToTest}}
+        [TestMethod]{{#if UniquePostfixForName}}
+        //TODO: This test method's name was postfixed with '{{UniquePostfixForName}}' to make it unique. Rename appropriately.{{/if}}
+        public {{#if IsAsync}}async Task{{else}}void{{/if}} {{Name}}_UnderNormalUse_ReturnsExpected{{UniquePostfixForName}}()
+        {
+            // Arrange
+            var cut = CreateCut();
+
+            // Act
+            {{#if HasReturn}}var actualResult = {{/if}}{{#if IsAsync}}await {{/if}}cut.{{Name}}({{#each Params}}default({{{Type}}}){{#unless @last}}, {{/unless}}{{/each}});
+
+            // Assert
+            Assert.IsTrue(true);
+        }
+
+        {{/each}}
+        #region HelperMethods
+
+        private {{CutName}} CreateCut
+        (
+            {{#each CtorParams}}
+            Mock<{{{Type}}}> {{Name}} = null{{#unless @last}},{{/unless}}
+            {{/each}}
+        )
+        {
+            {{#each CtorParams}}
+            {{Name}} = {{Name}} ?? new Mock<{{{Type}}}>();
+            {{#if @last}}
+
+            {{/if}}
+            {{/each}}
+            var cut = 
+                new {{CutName}}
+                (
+                    {{#each CtorParams}}
+                    {{Name}}.Object{{#unless @last}},{{/unless}}
+                    {{/each}}
+                );
+
+            return cut;
+        }
+
+        #endregion 
+    }
+}
