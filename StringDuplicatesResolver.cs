@@ -14,7 +14,6 @@ namespace UnitTestTemplateGenerator
         {
             _equalityComparer = equalityComparer ?? StringComparer.Ordinal;
         }
-
         public int? GeneratePostfixThatWillMakeStringUniqueOrDefault(string str)
         {
             var currentStr = str;
